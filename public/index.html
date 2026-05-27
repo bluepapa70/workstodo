@@ -31,7 +31,8 @@
     .task-table tr:last-child td { border-bottom: none; }
     .task-table tbody tr:hover td { background: rgba(255,255,255,.025); }
     .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; white-space: nowrap; }
-    .b-ip { background: rgba(46,170,220,.18); color: #2eaadc; border: 1px solid rgba(46,170,220,.35); }
+    .b-ip   { background: rgba(46,170,220,.18); color: #2eaadc; border: 1px solid rgba(46,170,220,.35); }
+    .b-done { background: rgba(39,174,96,.18);  color: #2ecc71; border: 1px solid rgba(39,174,96,.35); }
     .b-hi { background: rgba(192,57,43,.2);  color: #e74c3c; border: 1px solid rgba(192,57,43,.4); }
     .b-md { background: rgba(230,126,34,.2); color: #e67e22; border: 1px solid rgba(230,126,34,.4); }
     .b-lo { background: rgba(39,174,96,.2);  color: #2ecc71; border: 1px solid rgba(39,174,96,.4); }
@@ -141,18 +142,20 @@
   /* ── 컬럼 정의 ── */
   const cols = {
     ip: [
-      { id: 'add-del',     label: '',         fixed: true, w: 58  },
-      { id: 'title',       label: '작업 이름',             w: 200 },
-      { id: 'status',      label: '상태',                  w: 80  },
-      { id: 'priority',    label: '우선순위',               w: 90  },
-      { id: 'assignee',    label: '담당자',                 w: 110 },
-      { id: 'created_at',  label: '등록일',                 w: 120 },
-      { id: 'description', label: '설명',                   w: 200 },
-      { id: 'actions',     label: '',         fixed: true, w: 44  },
+      { id: 'add-del',      label: '',         fixed: true, w: 58  },
+      { id: 'title',        label: '작업 이름',             w: 200 },
+      { id: 'status',       label: '상태',                  w: 80  },
+      { id: 'priority',     label: '우선순위',               w: 90  },
+      { id: 'assignee',     label: '담당자',                 w: 110 },
+      { id: 'created_at',   label: '등록일',                 w: 120 },
+      { id: 'completed_at', label: '완료일',                 w: 120 },
+      { id: 'description',  label: '설명',                   w: 200 },
+      { id: 'actions',      label: '',         fixed: true, w: 44  },
     ],
     done: [
       { id: 'add-del',      label: '',          fixed: true, w: 58  },
       { id: 'title',        label: '작업 이름',              w: 200 },
+      { id: 'status',       label: '상태',                   w: 80  },
       { id: 'priority',     label: '우선순위',                w: 90  },
       { id: 'assignee',     label: '담당자',                  w: 110 },
       { id: 'created_at',   label: '등록일',                  w: 120 },
@@ -162,16 +165,18 @@
     ],
   };
 
+  const COL_KEY = 'wt-cols-v2';
+
   (function loadColState() {
     try {
-      const s = JSON.parse(localStorage.getItem('wt-cols') || 'null');
+      const s = JSON.parse(localStorage.getItem(COL_KEY) || 'null');
       if (s?.ip)   cols.ip   = s.ip;
       if (s?.done) cols.done = s.done;
     } catch {}
   })();
 
   function saveColState() {
-    localStorage.setItem('wt-cols', JSON.stringify(cols));
+    localStorage.setItem(COL_KEY, JSON.stringify(cols));
   }
 
   /* ── 컬럼 HTML 빌더 ── */
@@ -196,7 +201,9 @@
     }
     switch (colId) {
       case 'title':        return `<td>${cellInput(t.id,'title',t.title,'text',' t-title')}</td>`;
-      case 'status':       return `<td><span class="badge b-ip">진행 중</span></td>`;
+      case 'status':       return section === 'done'
+        ? `<td><span class="badge b-done">완료</span></td>`
+        : `<td><span class="badge b-ip">진행 중</span></td>`;
       case 'priority':     return `<td>${cellSelect(t.id,'priority',t.priority,['높음','보통','낮음'])}</td>`;
       case 'assignee':     return `<td>${cellInput(t.id,'assignee',t.assignee)}</td>`;
       case 'created_at':   return `<td>${cellInput(t.id,'created_at',t.created_at,'date')}</td>`;
@@ -212,11 +219,15 @@
     if (colId === 'actions') return '<td></td>';
     switch (colId) {
       case 'title':        return `<td><input id="nr-title" class="cell-input t-title" placeholder="업무 이름..." style="border-color:var(--accent);background:var(--surface-2)"></td>`;
-      case 'status':       return `<td><span class="badge b-ip">진행 중</span></td>`;
+      case 'status':       return section === 'done'
+        ? `<td><span class="badge b-done">완료</span></td>`
+        : `<td><span class="badge b-ip">진행 중</span></td>`;
       case 'priority':     return `<td><select id="nr-priority" class="cell-select"><option value="높음">높음</option><option value="보통" selected>보통</option><option value="낮음">낮음</option></select></td>`;
       case 'assignee':     return `<td><input id="nr-assignee"  class="cell-input" placeholder="—"></td>`;
       case 'created_at':   return `<td><input id="nr-created"   class="cell-input" type="date" value="${today()}"></td>`;
-      case 'completed_at': return `<td><input id="nr-completed" class="cell-input" type="date" value="${today()}"></td>`;
+      case 'completed_at': return section === 'ip'
+        ? `<td><input id="nr-completed" class="cell-input" type="date" placeholder="—"></td>`
+        : `<td><input id="nr-completed" class="cell-input" type="date" value="${today()}"></td>`;
       case 'description':  return `<td><input id="nr-desc"      class="cell-input" placeholder="—"></td>`;
     }
     return '<td></td>';
