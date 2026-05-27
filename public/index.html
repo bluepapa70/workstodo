@@ -43,9 +43,6 @@
     .status-select { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; cursor: pointer; font-family: inherit; outline: none; }
     .status-select.b-ip   { background: rgba(46,170,220,.18); color: #2eaadc; border: 1px solid rgba(46,170,220,.35); }
     .status-select.b-done { background: rgba(39,174,96,.18);  color: #2ecc71; border: 1px solid rgba(39,174,96,.35); }
-    .b-hi { background: rgba(192,57,43,.2);  color: #e74c3c; border: 1px solid rgba(192,57,43,.4); }
-    .b-md { background: rgba(230,126,34,.2); color: #e67e22; border: 1px solid rgba(230,126,34,.4); }
-    .b-lo { background: rgba(39,174,96,.2);  color: #2ecc71; border: 1px solid rgba(39,174,96,.4); }
     .actions { white-space: nowrap; text-align: right; }
     .btn-ic { background: none; border: 1px solid transparent; color: var(--text-dim); padding: 4px 7px; border-radius: 4px; cursor: pointer; font-size: 13px; margin-left: 3px; transition: all .15s; }
     .btn-ic:hover { background: var(--surface-2); border-color: var(--border); color: var(--text); }
@@ -138,7 +135,6 @@
       <div class="form-grid">
         <div class="f-field full"><label for="f-title">작업 이름 *</label><input id="f-title" type="text" placeholder="업무 이름을 입력하세요"></div>
         <div class="f-field"><label for="f-status">상태</label><select id="f-status"><option value="진행 중">진행 중</option><option value="완료">완료</option></select></div>
-        <div class="f-field"><label for="f-priority">우선순위</label><select id="f-priority"><option value="높음">높음</option><option value="보통" selected>보통</option><option value="낮음">낮음</option></select></div>
         <div class="f-field"><label for="f-assignee">담당자</label><input id="f-assignee" type="text" placeholder="담당자 이름"></div>
         <div class="f-field"><label for="f-created">등록일</label><input id="f-created" type="date"></div>
         <div class="f-field full"><label for="f-desc">설명 / 비고</label><textarea id="f-desc" placeholder="추가 설명이나 메모를 입력하세요"></textarea></div>
@@ -180,7 +176,6 @@
       { id: 'title',        label: '작업 이름',             w: 200 },
       { id: 'assignee',     label: '담당자',                w: 110 },
       { id: 'description',  label: '설명',                  w: 200 },
-      { id: 'priority',     label: '우선순위',               w: 90  },
       { id: 'status',       label: '상태',                  w: 80  },
       { id: 'created_at',   label: '등록일',                 w: 110 },
       { id: 'completed_at', label: '마감일',                 w: 110 },
@@ -190,7 +185,6 @@
       { id: 'title',        label: '작업 이름',              w: 200 },
       { id: 'assignee',     label: '담당자',                 w: 110 },
       { id: 'description',  label: '설명',                   w: 200 },
-      { id: 'priority',     label: '우선순위',                w: 90  },
       { id: 'status',       label: '상태',                   w: 80  },
       { id: 'created_at',   label: '등록일',                  w: 110 },
       { id: 'completed_at', label: '마감일',                  w: 110 },
@@ -198,7 +192,7 @@
     ],
   };
 
-  const COL_KEY = 'wt-cols-v6';
+  const COL_KEY = 'wt-cols-v7';
 
   (function loadColState() {
     try {
@@ -237,7 +231,6 @@
         ).join('');
         return `<td><select class="status-select ${cls}" data-id="${esc(t.id)}" data-field="status" data-original="${esc(t.status)}">${opts}</select></td>`;
       }
-      case 'priority':     return `<td>${cellSelect(t.id,'priority',t.priority,['높음','보통','낮음'])}</td>`;
       case 'assignee':     return `<td>${cellInput(t.id,'assignee',t.assignee)}</td>`;
       case 'created_at':   return `<td>${cellInput(t.id,'created_at',t.created_at,'date')}</td>`;
       case 'completed_at': return `<td>${cellInput(t.id,'completed_at',t.completed_at,'date')}</td>`;
@@ -255,7 +248,6 @@
       case 'status':       return section === 'done'
         ? `<td><span class="badge b-done">완료</span></td>`
         : `<td><span class="badge b-ip">진행 중</span></td>`;
-      case 'priority':     return `<td><select id="nr-priority" class="cell-select"><option value="높음">높음</option><option value="보통" selected>보통</option><option value="낮음">낮음</option></select></td>`;
       case 'assignee':     return `<td><input id="nr-assignee"  class="cell-input" placeholder="—"></td>`;
       case 'created_at':   return `<td><input id="nr-created"   class="cell-input" type="date" value="${today()}"></td>`;
       case 'completed_at': return section === 'ip'
@@ -434,7 +426,6 @@
     if (!title) { toast('작업 이름은 필수입니다.', 'err'); document.getElementById('nr-title').focus(); return; }
     const body = {
       title,
-      priority:    document.getElementById('nr-priority').value,
       assignee:    document.getElementById('nr-assignee')?.value.trim()  || null,
       created_at:  document.getElementById('nr-created')?.value          || null,
       description: document.getElementById('nr-desc')?.value.trim()      || null,
@@ -485,7 +476,6 @@
   function fillModal(t) {
     document.getElementById('f-title').value    = t?.title       || '';
     document.getElementById('f-status').value   = t?.status      || '진행 중';
-    document.getElementById('f-priority').value = t?.priority    || '보통';
     document.getElementById('f-assignee').value = t?.assignee    || '';
     document.getElementById('f-created').value  = t?.created_at  || today();
     document.getElementById('f-desc').value     = t?.description || '';
@@ -504,7 +494,7 @@
   async function submitTask() {
     const title = document.getElementById('f-title').value.trim();
     if (!title) { document.getElementById('f-title').focus(); return; }
-    const data = { title, status: document.getElementById('f-status').value, priority: document.getElementById('f-priority').value, assignee: document.getElementById('f-assignee').value.trim()||null, created_at: document.getElementById('f-created').value||null, description: document.getElementById('f-desc').value.trim()||null };
+    const data = { title, status: document.getElementById('f-status').value, assignee: document.getElementById('f-assignee').value.trim()||null, created_at: document.getElementById('f-created').value||null, description: document.getElementById('f-desc').value.trim()||null };
     const btn = document.getElementById('btn-save');
     btn.disabled = true;
     try {
