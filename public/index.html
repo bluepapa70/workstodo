@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>품질보증실장 업무 관리</title>
+  <title>품질혁신실장 업무 관리</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -204,7 +204,7 @@
 
   <!-- 헤더 -->
   <header class="page-header">
-    <h1>📋 품질보증실장 업무 관리</h1>
+    <h1>📋 품질혁신실장 업무 관리</h1>
     <button class="btn btn-primary" onclick="openCreate()">+ 새로 만들기</button>
   </header>
 
@@ -223,13 +223,12 @@
             <th>우선순위</th>
             <th>담당자</th>
             <th>등록일</th>
-            <th>마감일</th>
             <th>설명</th>
             <th></th>
           </tr>
         </thead>
         <tbody id="tb-ip">
-          <tr><td class="empty-cell" colspan="8">불러오는 중…</td></tr>
+          <tr><td class="empty-cell" colspan="7">불러오는 중…</td></tr>
         </tbody>
       </table>
     </div>
@@ -283,10 +282,6 @@
         <div class="f-field">
           <label for="f-created">등록일</label>
           <input id="f-created" type="date">
-        </div>
-        <div class="f-field">
-          <label for="f-due">마감일</label>
-          <input id="f-due" type="date">
         </div>
         <div class="f-field full">
           <label for="f-desc">설명 / 비고</label>
@@ -388,7 +383,6 @@
         <td>${priorityBadge(t.priority)}</td>
         <td>${esc(t.assignee || '—')}</td>
         <td>${esc(t.created_at || '—')}</td>
-        <td>${esc(t.due_date || '—')}</td>
         <td class="desc-cell" title="${esc(t.description || '')}">${esc(t.description || '—')}</td>
         <td class="actions">
           <button class="btn-ic do-complete" onclick="completeTask('${esc(t.id)}')" title="완료 처리">✓</button>
@@ -433,7 +427,6 @@
           <td>${priorityBadge(t.priority)}</td>
           <td>${esc(t.assignee || '—')}</td>
           <td>${esc(t.created_at || '—')}</td>
-          <td>${esc(t.due_date || '—')}</td>
           <td>${esc(t.completed_at || '—')}</td>
           <td class="desc-cell" title="${esc(t.description || '')}">${esc(t.description || '—')}</td>
           <td class="actions">
@@ -454,7 +447,7 @@
               <thead>
                 <tr>
                   <th>작업 이름</th><th>우선순위</th><th>담당자</th>
-                  <th>등록일</th><th>마감일</th><th>완료일</th><th>설명</th><th></th>
+                  <th>등록일</th><th>완료일</th><th>설명</th><th></th>
                 </tr>
               </thead>
               <tbody>${rows}</tbody>
@@ -472,7 +465,6 @@
     document.getElementById('f-priority').value = t?.priority    || '보통';
     document.getElementById('f-assignee').value = t?.assignee    || '';
     document.getElementById('f-created').value  = t?.created_at  || today();
-    document.getElementById('f-due').value      = t?.due_date    || '';
     document.getElementById('f-desc').value     = t?.description || '';
   }
 
@@ -516,7 +508,6 @@
       priority:    document.getElementById('f-priority').value,
       assignee:    document.getElementById('f-assignee').value.trim() || null,
       created_at:  document.getElementById('f-created').value  || null,
-      due_date:    document.getElementById('f-due').value       || null,
       description: document.getElementById('f-desc').value.trim() || null,
     };
 
