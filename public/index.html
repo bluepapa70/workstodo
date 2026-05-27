@@ -19,7 +19,7 @@
       --accent: #1a8ab5; --green: #1e8c4e; --red: #b83228; --orange: #c9691c;
     }
     body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; line-height: 1.5; }
-    .page { max-width: 1400px; margin: 0 auto; padding: 0 28px 60px; }
+    .page { margin: 0 auto; padding: 0 28px 60px; }
     .page-header { display: flex; align-items: center; justify-content: space-between; padding: 28px 0 20px; border-bottom: 1px solid var(--border); margin-bottom: 32px; }
     .page-header h1 { font-size: 1.7rem; font-weight: 700; color: var(--text-heading); }
     .btn { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; transition: background .15s, opacity .15s; }
@@ -215,7 +215,14 @@
 
   /* ── 컬럼 HTML 빌더 ── */
   function buildColgroup(section) {
-    return '<colgroup>' + cols[section].map(c => `<col style="width:${c.w}px">`).join('') + '</colgroup>';
+    const arr = cols[section];
+    const fixedPx  = arr.filter(c => c.fixed).reduce((s, c) => s + c.w, 0);
+    const flexTot  = arr.filter(c => !c.fixed).reduce((s, c) => s + c.w, 0);
+    return '<colgroup>' + arr.map(c => {
+      if (c.fixed) return `<col style="width:${c.w}px">`;
+      const ratio = (c.w / flexTot).toFixed(4);
+      return `<col style="width:calc((100% - ${fixedPx}px) * ${ratio});min-width:40px">`;
+    }).join('') + '</colgroup>';
   }
 
   function buildHeader(section) {
@@ -357,16 +364,28 @@
       handle.addEventListener('dragstart', e => e.preventDefault());
       handle.addEventListener('mousedown', e => {
         e.preventDefault(); e.stopPropagation();
-        const idx = +handle.dataset.colidx;
-        const startX = e.pageX, startW = cols[section][idx].w;
+        const idx     = +handle.dataset.colidx;
+        const startX  = e.pageX;
+        const startW  = cols[section][idx].w;
+        const arr     = cols[section];
+        const fixedPx = arr.filter(c => c.fixed).reduce((s, c) => s + c.w, 0);
+        const flexTot0  = arr.filter(c => !c.fixed).reduce((s, c) => s + c.w, 0);
+        const flexAvail0 = Math.max(1, table.getBoundingClientRect().width - fixedPx);
         document.body.style.cursor = 'col-resize';
         document.body.style.userSelect = 'none';
         const onMove = e => {
-          const newW = Math.max(40, startW + e.pageX - startX);
-          cols[section][idx].w = newW;
+          // 픽셀 드래그 → 가중치 변화로 변환 (비율 유지하며 전체 폭 채움)
+          const wPerPx = flexTot0 / flexAvail0;
+          const newW   = Math.max(40 * wPerPx, startW + (e.pageX - startX) * wPerPx);
+          arr[idx].w   = newW;
+          const newFlexTot = arr.filter(c => !c.fixed).reduce((s, c) => s + c.w, 0);
           document.querySelectorAll(`.task-table[data-section="${section}"]`).forEach(tbl => {
-            const col = tbl.querySelectorAll('colgroup col')[idx];
-            if (col) col.style.width = newW + 'px';
+            const cgCols = tbl.querySelectorAll('colgroup col');
+            arr.forEach((c, i) => {
+              if (c.fixed) return;
+              const col = cgCols[i];
+              if (col) col.style.width = `calc((100% - ${fixedPx}px) * ${(c.w / newFlexTot).toFixed(4)})`;
+            });
           });
         };
         const onUp = () => {
