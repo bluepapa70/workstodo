@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>제품 요구사항 정의서 (PRD)</title>
+    <style>
+        :root {
+            --bg-color: #1a1a1a;
+            --container-bg: #222222;
+            --text-color: #e0e0e0;
+            --accent-color: #2eaadc;
+            --border-color: #333333;
+            --table-header-bg: #2a2a2a;
+            --badge-in-progress: #2eaadc;
+            --badge-completed: #27ae60;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            margin: 0;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: var(--container-bg);
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+        h1 {
+            font-size: 2.2rem;
+            color: #ffffff;
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+        h2 {
+            font-size: 1.6rem;
+            color: #ffffff;
+            margin-top: 30px;
+            border-left: 4px solid var(--accent-color);
+            padding-left: 12px;
+        }
+        h3 {
+            font-size: 1.2rem;
+            color: #f0f0f0;
+            margin-top: 20px;
+        }
+        p, li {
+            color: #cccccc;
+            font-size: 1.05rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 0.95rem;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        th {
+            background-color: var(--table-header-bg);
+            color: #ffffff;
+            font-weight: 600;
+        }
+        tr:hover {
+            background-color: rgba(255,255,255,0.02);
+        }
+        code {
+            background-color: #2d2d2d;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Consolas', Monaco, monospace;
+            font-size: 0.9rem;
+            color: #f1c40f;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>제품 요구사항 정의서 (PRD): 웹 기반 업무 관리 시스템</h1>
+        <p>본 문서는 노션 스타일의 직관적인 데이터 테이블 UI를 계승하면서, 사용자의 요구사항에 맞춘 자동 정렬 및 완료 업무 월별 그룹화 기능을 제공하는 웹 서비스 구축 사양을 정의합니다.</p>
+
+        <h2>1. 프로젝트 개요</h2>
+        <p>기존 업무 방식을 고도화하여 등록일 관리 기능을 추가하고, 진행 중인 업무는 상단에, 완료된 업무는 등록일(우선) 혹은 완료일 기준으로 월별 분류하여 하단에 배치하는 정밀한 상태 기반 리스트 뷰를 제공합니다. Cloudflare Pages, Workers, D1 DB 인프라를 활용하여 서버리스 구조로 구축됩니다.</p>
+
+        <h2>2. 핵심 기능 요구사항 (Functional Requirements)</h2>
+        <h3>2.1 데이터 모델 구조</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>필드명</th>
+                    <th>데이터 타입</th>
+                    <th>필수여부</th>
+                    <th>설명</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>id</td><td>TEXT (UUID)</td><td>필수</td><td>고유 식별자</td></tr>
+                <tr><td>title</td><td>TEXT</td><td>필수</td><td>작업 이름</td></tr>
+                <tr><td>status</td><td>TEXT</td><td>필수</td><td>업무 상태 ('진행 중' / '완료')</td></tr>
+                <tr><td>priority</td><td>TEXT</td><td>필수</td><td>우선순위 ('높음', '보통', '낮음')</td></tr>
+                <tr><td>assignee</td><td>TEXT</td><td>선택</td><td>담당자 이름</td></tr>
+                <tr><td>description</td><td>TEXT</td><td>선택</td><td>설명 및 비고</td></tr>
+                <tr><td>created_at</td><td>TEXT (YYYY-MM-DD)</td><td>선택</td><td><strong>[요구사항] 업무 등록일</strong></td></tr>
+                <tr><td>due_date</td><td>TEXT (YYYY-MM-DD)</td><td>선택</td><td>마감일</td></tr>
+                <tr><td>completed_at</td><td>TEXT (YYYY-MM-DD)</td><td>선택</td><td>완료 처리일 (자동)</td></tr>
+            </tbody>
+        </table>
+
+        <h3>2.2 리스트 분리 및 정렬 메커니즘</h3>
+        <ul>
+            <li><strong>상단 리스트 (진행 중인 업무):</strong> <code>status</code>가 '진행 중'인 데이터만 필터링되어 출력됩니다.</li>
+            <li><strong>하단 리스트 (완료된 업무):</strong> <code>status</code>가 '완료'인 데이터를 분리하여 출력합니다.</li>
+            <li><strong>완료 업무 월별 그룹화 분기 로직:</strong>
+                <br>1. 데이터에 <code>created_at</code>(등록일)이 존재하면 해당 등록일의 '월(YYYY-MM)'을 그룹 키로 지정합니다.
+                <br>2. 만약 <code>created_at</code>이 존재하지 않는 경우(Null/Empty), <code>completed_at</code>(완료일)의 '월(YYYY-MM)'을 차선책 그룹 키로 지정합니다.
+                <br>3. 그룹화된 리스트는 최신 월이 상단에 배치되도록 내림차순 정렬됩니다.
+            </li>
+        </ul>
+
+        <h2>3. 기술 스택 아키텍처</h2>
+        <ul>
+            <li><strong>Frontend:</strong> HTML5, CSS3 Custom Properties (다크 테마 디자인), Modern JavaScript (Fetch API)</li>
+            <li><strong>Server/API:</strong> Cloudflare Workers (Edge Serverless)</li>
+            <li><strong>Database:</strong> Cloudflare D1 (Serverless Relational SQL DB)</li>
+            <li><strong>Deployment:</strong> Cloudflare Pages Integration</li>
+        </ul>
+    </div>
+</body>
+</html>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>개발 및 배포 플랜 (Plan)</title>
+    <style>
+        :root {
+            --bg-color: #1a1a1a;
+            --container-bg: #222222;
+            --text-color: #e0e0e0;
+            --accent-color: #27ae60;
+            --border-color: #333333;
+            --table-header-bg: #2a2a2a;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            margin: 0;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: var(--container-bg);
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+        h1 {
+            font-size: 2.2rem;
+            color: #ffffff;
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+        h2 {
+            font-size: 1.6rem;
+            color: #ffffff;
+            margin-top: 30px;
+            border-left: 4px solid var(--accent-color);
+            padding-left: 12px;
+        }
+        h3 {
+            font-size: 1.2rem;
+            color: #f0f0f0;
+            margin-top: 20px;
+        }
+        p, li {
+            color: #cccccc;
+            font-size: 1.05rem;
+        }
+        pre {
+            background-color: #2d2d2d;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+        }
+        code {
+            color: #f1c40f;
+            font-family: 'Consolas', Monaco, monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>개발 및 배포 플랜 (Development & Deployment Plan)</h1>
+        <p>Cloudflare 생태계를 기반으로 효율적이고 견고하게 시스템을 빌드하고 배포하기 위한 일정 및 기술 실행 방안입니다.</p>
+
+        <h2>1. 단계별 개발 일정 (Milestones)</h2>
+        <h3>Phase 1: DB 모델링 및 인프라 프로비저닝 (1~2일차)</h3>
+        <p>Cloudflare 가입 후 D1 데이터베이스 생성 및 스키마 초기화 작업을 수행합니다.</p>
+        <pre><code>-- D1 데이터베이스 생성용 스키마
+CREATE TABLE tasks (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    status TEXT NOT NULL CHECK(status IN ('진행 중', '완료')),
+    priority TEXT NOT NULL CHECK(priority IN ('높음', '보통', '낮음')),
+    assignee TEXT,
+    description TEXT,
+    created_at TEXT,
+    due_date TEXT,
+    completed_at TEXT
+);</code></pre>
+
+        <h3>Phase 2: Cloudflare Workers 백엔드 API 개발 (3-4일차)</h3>
+        <p>RESTful API를 구현하여 D1 DB와 통신을 담당하는 가벼운 Worker 스크립트를 배포합니다. <code>GET /api/tasks</code>, <code>POST /api/tasks</code>, <code>PUT /api/tasks/:id</code> 등의 엔드포인트를 지원합니다.</p>
+
+        <h3>Phase 3: 프론트엔드 노션 스타일 UI 및 핵심 로직 연동 (5-7일차)</h3>
+        <p>제공된 캡처본 화면과 같이 정밀한 어두운 색조 테마의 테이블 뷰를 마크업하고, JavaScript 엔진을 통해 서버 데이터를 받아 상하단 분리 및 월별 아카이브 알고리즘을 런타임 빌드합니다.</p>
+
+        <h3>Phase 4: Cloudflare Pages 최종 배포 및 검증 (8일차)</h3>
+        <p>Wrangler CLI를 활용하여 빌드된 자산을 Cloudflare 전역 엣지 네트워크에 배포하고, 도메인 연결 및 실운영 환경 통합 테스트를 마무리합니다.</p>
+    </div>
+</body>
+</html>
