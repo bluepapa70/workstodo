@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>업무 관리 시스템</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         #191919;
+      --surface:    #252525;
+      --surface-2:  #2d2d2d;
+      --border:     #363636;
+      --text:       #e0e0e0;
+      --text-dim:   #888;
+      --accent:     #2eaadc;
+      --green:      #27ae60;
+      --red:        #c0392b;
+      --orange:     #e67e22;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* ── 레이아웃 ── */
+    .page { max-width: 1400px; margin: 0 auto; padding: 0 28px 60px; }
+
+    /* ── 헤더 ── */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 28px 0 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 32px;
+    }
+    .page-header h1 { font-size: 1.7rem; font-weight: 700; color: #fff; }
+
+    /* ── 버튼 ── */
+    .btn {
+      padding: 8px 16px; border: none; border-radius: 6px;
+      cursor: pointer; font-size: 13px; font-weight: 500;
+      transition: background 0.15s, opacity 0.15s;
+    }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary   { background: var(--accent); color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: #279cc8; }
+    .btn-secondary { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover:not(:disabled) { background: #383838; }
+
+    /* ── 섹션 헤더 ── */
+    .section-hd {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+    }
+    .section-title { font-size: 1.05rem; font-weight: 600; color: #fff; }
+    .count-badge {
+      background: var(--surface-2); border: 1px solid var(--border);
+      color: var(--text-dim); font-size: 11px; padding: 2px 8px; border-radius: 10px;
+    }
+
+    /* ── 테이블 ── */
+    .table-wrap {
+      overflow-x: auto; border-radius: 8px;
+      border: 1px solid var(--border); margin-bottom: 40px;
+    }
+    .task-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .task-table th {
+      background: var(--surface); color: var(--text-dim);
+      font-weight: 500; padding: 10px 14px; text-align: left;
+      border-bottom: 1px solid var(--border); white-space: nowrap;
+    }
+    .task-table td {
+      padding: 10px 14px; border-bottom: 1px solid #2b2b2b; vertical-align: middle;
+    }
+    .task-table tr:last-child td { border-bottom: none; }
+    .task-table tbody tr:hover td { background: rgba(255,255,255,0.025); }
+
+    /* ── 작업 이름 링크 ── */
+    .t-link {
+      cursor: pointer; color: var(--text); font-weight: 500;
+      transition: color 0.15s;
+    }
+    .t-link:hover { color: var(--accent); text-decoration: underline; }
+
+    /* ── 배지 ── */
+    .badge {
+      display: inline-block; padding: 3px 8px; border-radius: 4px;
+      font-size: 11px; font-weight: 500; white-space: nowrap;
+    }
+    .b-ip  { background: rgba(46,170,220,.18); color: #2eaadc; border: 1px solid rgba(46,170,220,.35); }
+    .b-hi  { background: rgba(192,57,43,.2);   color: #e74c3c; border: 1px solid rgba(192,57,43,.4); }
+    .b-md  { background: rgba(230,126,34,.2);  color: #e67e22; border: 1px solid rgba(230,126,34,.4); }
+    .b-lo  { background: rgba(39,174,96,.2);   color: #2ecc71; border: 1px solid rgba(39,174,96,.4); }
+
+    /* ── 아이콘 버튼 ── */
+    .actions { white-space: nowrap; text-align: right; }
+    .btn-ic {
+      background: none; border: 1px solid transparent;
+      color: var(--text-dim); padding: 4px 7px; border-radius: 4px;
+      cursor: pointer; font-size: 13px; margin-left: 3px;
+      transition: all 0.15s;
+    }
+    .btn-ic:hover { background: var(--surface-2); border-color: var(--border); color: var(--text); }
+    .btn-ic.do-complete:hover { border-color: var(--green);  color: var(--green); }
+    .btn-ic.do-edit:hover     { border-color: var(--accent); color: var(--accent); }
+    .btn-ic.do-delete:hover   { border-color: var(--red);    color: var(--red); }
+
+    /* ── 설명 셀 ── */
+    .desc-cell {
+      max-width: 180px; overflow: hidden;
+      text-overflow: ellipsis; white-space: nowrap; color: var(--text-dim);
+    }
+
+    /* ── 빈 상태 ── */
+    .empty-cell { text-align: center; color: var(--text-dim); padding: 28px; font-style: italic; }
+
+    /* ── 완료 업무 – 월 그룹 ── */
+    .month-group  { margin-bottom: 20px; }
+    .month-hd {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 14px; background: var(--surface);
+      border: 1px solid var(--border); border-radius: 8px 8px 0 0;
+    }
+    .month-title { font-weight: 600; color: #ccc; font-size: 0.9rem; }
+    .month-group .table-wrap {
+      border-top: none; border-radius: 0 0 8px 8px; margin-bottom: 0;
+    }
+
+    /* ── 모달 ── */
+    .modal-ov {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.72); z-index: 1000;
+      justify-content: center; align-items: flex-start; padding-top: 56px;
+    }
+    .modal-ov.open { display: flex; }
+
+    .modal {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; width: 560px;
+      max-width: calc(100vw - 32px); max-height: calc(100vh - 112px);
+      overflow-y: auto; box-shadow: 0 24px 64px rgba(0,0,0,.55);
+    }
+    .modal-hd {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 20px 24px 16px; border-bottom: 1px solid var(--border);
+    }
+    .modal-hd h2 { font-size: 1.1rem; font-weight: 600; color: #fff; }
+    .modal-close {
+      background: none; border: none; color: var(--text-dim);
+      cursor: pointer; font-size: 20px; line-height: 1; padding: 4px;
+    }
+    .modal-close:hover { color: var(--text); }
+    .modal-body { padding: 20px 24px; }
+    .modal-ft {
+      display: flex; justify-content: flex-end; gap: 10px;
+      padding: 16px 24px 20px; border-top: 1px solid var(--border);
+    }
+
+    /* ── 폼 ── */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .f-field { display: flex; flex-direction: column; gap: 6px; }
+    .f-field.full { grid-column: 1 / -1; }
+    .f-field label {
+      font-size: 11px; font-weight: 500; color: var(--text-dim);
+      text-transform: uppercase; letter-spacing: .05em;
+    }
+    .f-field input,
+    .f-field select,
+    .f-field textarea {
+      background: var(--surface-2); border: 1px solid var(--border);
+      color: var(--text); padding: 8px 12px; border-radius: 6px;
+      font-size: 14px; font-family: inherit; outline: none;
+      transition: border-color 0.15s;
+    }
+    .f-field input:focus,
+    .f-field select:focus,
+    .f-field textarea:focus { border-color: var(--accent); }
+    .f-field textarea { min-height: 80px; resize: vertical; }
+
+    /* ── 토스트 ── */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px;
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); padding: 12px 20px; border-radius: 8px;
+      font-size: 13px; z-index: 2000; pointer-events: none;
+      transform: translateY(80px); opacity: 0; transition: all .3s;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.ok  { border-left: 3px solid var(--green); }
+    .toast.err { border-left: 3px solid var(--red); }
+
+    .dim { color: var(--text-dim); }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- 헤더 -->
+  <header class="page-header">
+    <h1>📋 업무 관리 시스템</h1>
+    <button class="btn btn-primary" onclick="openCreate()">+ 새로 만들기</button>
+  </header>
+
+  <!-- 진행 중인 업무 -->
+  <section>
+    <div class="section-hd">
+      <span class="section-title">진행 중인 업무</span>
+      <span class="count-badge" id="cnt-ip">0</span>
+    </div>
+    <div class="table-wrap">
+      <table class="task-table">
+        <thead>
+          <tr>
+            <th>작업 이름</th>
+            <th>상태</th>
+            <th>우선순위</th>
+            <th>담당자</th>
+            <th>등록일</th>
+            <th>마감일</th>
+            <th>설명</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tb-ip">
+          <tr><td class="empty-cell" colspan="8">불러오는 중…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 완료된 업무 -->
+  <section>
+    <div class="section-hd" style="margin-top:8px">
+      <span class="section-title">완료된 업무</span>
+      <span class="count-badge" id="cnt-done">0</span>
+    </div>
+    <div id="done-container">
+      <p class="dim" style="padding:20px 0">불러오는 중…</p>
+    </div>
+  </section>
+
+</div>
+
+<!-- ── 모달 ── -->
+<div class="modal-ov" id="modal-ov" onclick="onOverlayClick(event)">
+  <div class="modal">
+    <div class="modal-hd">
+      <h2 id="modal-title">새 업무 만들기</h2>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="f-field full">
+          <label for="f-title">작업 이름 *</label>
+          <input id="f-title" type="text" placeholder="업무 이름을 입력하세요">
+        </div>
+        <div class="f-field">
+          <label for="f-status">상태</label>
+          <select id="f-status">
+            <option value="진행 중">진행 중</option>
+            <option value="완료">완료</option>
+          </select>
+        </div>
+        <div class="f-field">
+          <label for="f-priority">우선순위</label>
+          <select id="f-priority">
+            <option value="높음">높음</option>
+            <option value="보통" selected>보통</option>
+            <option value="낮음">낮음</option>
+          </select>
+        </div>
+        <div class="f-field">
+          <label for="f-assignee">담당자</label>
+          <input id="f-assignee" type="text" placeholder="담당자 이름">
+        </div>
+        <div class="f-field">
+          <label for="f-created">등록일</label>
+          <input id="f-created" type="date">
+        </div>
+        <div class="f-field">
+          <label for="f-due">마감일</label>
+          <input id="f-due" type="date">
+        </div>
+        <div class="f-field full">
+          <label for="f-desc">설명 / 비고</label>
+          <textarea id="f-desc" placeholder="추가 설명이나 메모를 입력하세요"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-secondary" onclick="closeModal()">취소</button>
+      <button class="btn btn-primary" id="btn-save" onclick="submitTask()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 토스트 -->
+<div class="toast" id="toast"></div>
+
+<script>
+  'use strict';
+
+  const API = '/api/tasks';
+  let tasks = [];
+  let editingId = null;
+
+  /* ── 유틸 ── */
+  function esc(s) {
+    if (s == null) return '';
+    return String(s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+  }
+
+  function today() { return new Date().toISOString().slice(0, 10); }
+
+  function toast(msg, type = 'ok') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = `toast ${type} show`;
+    clearTimeout(el._t);
+    el._t = setTimeout(() => { el.className = 'toast'; }, 2600);
+  }
+
+  /* ── API 호출 ── */
+  async function apiFetch(url, opts = {}) {
+    const res = await fetch(url, {
+      headers: { 'Content-Type': 'application/json' },
+      ...opts,
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    return data;
+  }
+
+  async function loadTasks() {
+    try {
+      tasks = await apiFetch(API);
+      renderAll();
+    } catch {
+      document.getElementById('tb-ip').innerHTML =
+        '<tr><td class="empty-cell" colspan="8">데이터를 불러올 수 없습니다.</td></tr>';
+      document.getElementById('done-container').innerHTML =
+        '<p class="dim" style="padding:20px 0">데이터를 불러올 수 없습니다.</p>';
+    }
+  }
+
+  /* ── 렌더링 ── */
+  function priorityBadge(p) {
+    const cls = { '높음': 'b-hi', '보통': 'b-md', '낮음': 'b-lo' }[p] || 'b-md';
+    return `<span class="badge ${cls}">${esc(p)}</span>`;
+  }
+
+  function renderAll() {
+    const ip   = tasks.filter(t => t.status === '진행 중');
+    const done = tasks.filter(t => t.status === '완료');
+    document.getElementById('cnt-ip').textContent   = ip.length;
+    document.getElementById('cnt-done').textContent = done.length;
+    renderInProgress(ip);
+    renderCompleted(done);
+  }
+
+  function renderInProgress(list) {
+    const sorted = [...list].sort((a, b) => {
+      if (!a.due_date && !b.due_date) return 0;
+      if (!a.due_date) return 1;
+      if (!b.due_date) return -1;
+      return a.due_date.localeCompare(b.due_date);
+    });
+
+    const tbody = document.getElementById('tb-ip');
+    if (sorted.length === 0) {
+      tbody.innerHTML = '<tr><td class="empty-cell" colspan="8">진행 중인 업무가 없습니다.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = sorted.map(t => `
+      <tr>
+        <td><span class="t-link" onclick="openEdit('${esc(t.id)}')">${esc(t.title)}</span></td>
+        <td><span class="badge b-ip">진행 중</span></td>
+        <td>${priorityBadge(t.priority)}</td>
+        <td>${esc(t.assignee || '—')}</td>
+        <td>${esc(t.created_at || '—')}</td>
+        <td>${esc(t.due_date || '—')}</td>
+        <td class="desc-cell" title="${esc(t.description || '')}">${esc(t.description || '—')}</td>
+        <td class="actions">
+          <button class="btn-ic do-complete" onclick="completeTask('${esc(t.id)}')" title="완료 처리">✓</button>
+          <button class="btn-ic do-edit"     onclick="openEdit('${esc(t.id)}')"     title="수정">✏</button>
+          <button class="btn-ic do-delete"   onclick="confirmDelete('${esc(t.id)}')" title="삭제">✕</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function renderCompleted(list) {
+    const container = document.getElementById('done-container');
+    if (list.length === 0) {
+      container.innerHTML = '<p class="dim" style="padding:20px 0">완료된 업무가 없습니다.</p>';
+      return;
+    }
+
+    // 월별 그룹화: created_at 우선, 없으면 completed_at
+    const groups = {};
+    list.forEach(t => {
+      const date = t.created_at || t.completed_at;
+      const key  = date ? date.slice(0, 7) : '__none__';
+      (groups[key] = groups[key] || []).push(t);
+    });
+
+    const keys = Object.keys(groups).sort().reverse();
+
+    container.innerHTML = keys.map(key => {
+      const label = key === '__none__'
+        ? '날짜 미정'
+        : (() => { const [y, m] = key.split('-'); return `${y}년 ${parseInt(m)}월`; })();
+
+      const items = [...groups[key]].sort((a, b) => {
+        const ad = a.created_at || a.completed_at || '';
+        const bd = b.created_at || b.completed_at || '';
+        return bd.localeCompare(ad);
+      });
+
+      const rows = items.map(t => `
+        <tr>
+          <td><span class="t-link" onclick="openEdit('${esc(t.id)}')">${esc(t.title)}</span></td>
+          <td>${priorityBadge(t.priority)}</td>
+          <td>${esc(t.assignee || '—')}</td>
+          <td>${esc(t.created_at || '—')}</td>
+          <td>${esc(t.due_date || '—')}</td>
+          <td>${esc(t.completed_at || '—')}</td>
+          <td class="desc-cell" title="${esc(t.description || '')}">${esc(t.description || '—')}</td>
+          <td class="actions">
+            <button class="btn-ic do-edit"   onclick="openEdit('${esc(t.id)}')"     title="수정">✏</button>
+            <button class="btn-ic do-delete" onclick="confirmDelete('${esc(t.id)}')" title="삭제">✕</button>
+          </td>
+        </tr>
+      `).join('');
+
+      return `
+        <div class="month-group">
+          <div class="month-hd">
+            <span class="month-title">${label}</span>
+            <span class="count-badge">${items.length}개</span>
+          </div>
+          <div class="table-wrap">
+            <table class="task-table">
+              <thead>
+                <tr>
+                  <th>작업 이름</th><th>우선순위</th><th>담당자</th>
+                  <th>등록일</th><th>마감일</th><th>완료일</th><th>설명</th><th></th>
+                </tr>
+              </thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  /* ── 모달 ── */
+  function fillModal(t) {
+    document.getElementById('f-title').value    = t?.title       || '';
+    document.getElementById('f-status').value   = t?.status      || '진행 중';
+    document.getElementById('f-priority').value = t?.priority    || '보통';
+    document.getElementById('f-assignee').value = t?.assignee    || '';
+    document.getElementById('f-created').value  = t?.created_at  || today();
+    document.getElementById('f-due').value      = t?.due_date    || '';
+    document.getElementById('f-desc').value     = t?.description || '';
+  }
+
+  function openCreate() {
+    editingId = null;
+    document.getElementById('modal-title').textContent = '새 업무 만들기';
+    fillModal(null);
+    document.getElementById('modal-ov').classList.add('open');
+    document.getElementById('f-title').focus();
+  }
+
+  function openEdit(id) {
+    const t = tasks.find(t => t.id === id);
+    if (!t) return;
+    editingId = id;
+    document.getElementById('modal-title').textContent = '업무 수정';
+    fillModal(t);
+    document.getElementById('modal-ov').classList.add('open');
+    document.getElementById('f-title').focus();
+  }
+
+  function closeModal() {
+    document.getElementById('modal-ov').classList.remove('open');
+    editingId = null;
+  }
+
+  function onOverlayClick(e) {
+    if (e.target === document.getElementById('modal-ov')) closeModal();
+  }
+
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+  /* ── 저장 ── */
+  async function submitTask() {
+    const title = document.getElementById('f-title').value.trim();
+    if (!title) { document.getElementById('f-title').focus(); return; }
+
+    const data = {
+      title,
+      status:      document.getElementById('f-status').value,
+      priority:    document.getElementById('f-priority').value,
+      assignee:    document.getElementById('f-assignee').value.trim() || null,
+      created_at:  document.getElementById('f-created').value  || null,
+      due_date:    document.getElementById('f-due').value       || null,
+      description: document.getElementById('f-desc').value.trim() || null,
+    };
+
+    const btn = document.getElementById('btn-save');
+    btn.disabled = true;
+
+    try {
+      if (editingId) {
+        const updated = await apiFetch(`${API}/${editingId}`, {
+          method: 'PUT', body: JSON.stringify(data),
+        });
+        tasks = tasks.map(t => t.id === editingId ? updated : t);
+        toast('업무가 수정되었습니다.');
+      } else {
+        const created = await apiFetch(API, {
+          method: 'POST', body: JSON.stringify(data),
+        });
+        tasks.push(created);
+        toast('업무가 생성되었습니다.');
+      }
+      closeModal();
+      renderAll();
+    } catch (err) {
+      toast(err.message, 'err');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  /* ── 완료 처리 ── */
+  async function completeTask(id) {
+    try {
+      const updated = await apiFetch(`${API}/${id}`, {
+        method: 'PUT', body: JSON.stringify({ status: '완료' }),
+      });
+      tasks = tasks.map(t => t.id === id ? updated : t);
+      toast('완료 처리되었습니다.');
+      renderAll();
+    } catch (err) {
+      toast(err.message, 'err');
+    }
+  }
+
+  /* ── 삭제 ── */
+  async function confirmDelete(id) {
+    const t = tasks.find(t => t.id === id);
+    if (!t || !confirm(`"${t.title}" 업무를 삭제하시겠습니까?`)) return;
+    try {
+      await apiFetch(`${API}/${id}`, { method: 'DELETE' });
+      tasks = tasks.filter(t => t.id !== id);
+      toast('업무가 삭제되었습니다.');
+      renderAll();
+    } catch (err) {
+      toast(err.message, 'err');
+    }
+  }
+
+  /* ── 초기화 ── */
+  loadTasks();
+</script>
+</body>
+</html>

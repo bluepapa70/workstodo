@@ -1,0 +1,12 @@
+name = "workstodo"
+main = "src/worker.js"
+compatibility_date = "2024-09-23"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "workstodo-db"
+database_id = "17a4fc9f-bf89-499b-b342-012224f68122"
