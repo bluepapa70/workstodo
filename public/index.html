@@ -183,7 +183,6 @@
       { id: 'status',       label: '상태',                  w: 80  },
       { id: 'created_at',   label: '등록일',                 w: 110 },
       { id: 'completed_at', label: '완료일',                 w: 110 },
-      { id: 'actions',      label: '',         fixed: true, w: 44  },
     ],
     done: [
       { id: 'add-del',      label: '',          fixed: true, w: 58  },
@@ -199,7 +198,7 @@
     ],
   };
 
-  const COL_KEY = 'wt-cols-v4';
+  const COL_KEY = 'wt-cols-v5';
 
   (function loadColState() {
     try {
@@ -235,11 +234,7 @@
   /* ── 셀 렌더러 ── */
   function cellOf(section, colId, t) {
     if (colId === 'add-del') return `<td class="col-add-del"><button class="btn-ic do-add" onclick="addRowBelow('${esc(t.id)}')" title="아래에 추가">+</button><button class="btn-ic do-delete" onclick="confirmDelete('${esc(t.id)}')" title="삭제">−</button></td>`;
-    if (colId === 'actions') {
-      return section === 'ip'
-        ? `<td class="actions"><button class="btn-ic do-complete" onclick="completeTask('${esc(t.id)}')" title="완료 처리">✓</button></td>`
-        : `<td class="actions"><button class="btn-ic do-revert"  onclick="revertTask('${esc(t.id)}')"   title="진행 중으로 되돌리기">↩</button></td>`;
-    }
+    if (colId === 'actions') return `<td class="actions"><button class="btn-ic do-revert" onclick="revertTask('${esc(t.id)}')" title="진행 중으로 되돌리기">↩</button></td>`;
     switch (colId) {
       case 'title':        return `<td>${cellInput(t.id,'title',t.title,'text',' t-title')}</td>`;
       case 'due_date':     return `<td>${cellInput(t.id,'due_date',t.due_date,'date')}</td>`;
@@ -544,10 +539,6 @@
   }
 
   /* ── 상태 변경 ── */
-  async function completeTask(id) {
-    try { const u = await apiFetch(`${API}/${id}`, { method:'PUT', body: JSON.stringify({status:'완료'}) }); tasks=tasks.map(t=>t.id===id?u:t); toast('완료 처리되었습니다.'); renderAll(); }
-    catch(err) { toast(err.message,'err'); }
-  }
   async function revertTask(id) {
     try { const u = await apiFetch(`${API}/${id}`, { method:'PUT', body: JSON.stringify({status:'진행 중'}) }); tasks=tasks.map(t=>t.id===id?u:t); toast('진행 중으로 되돌렸습니다.'); renderAll(); }
     catch(err) { toast(err.message,'err'); }
