@@ -197,6 +197,30 @@
     .toast.err { border-left: 3px solid var(--red); }
 
     .dim { color: var(--text-dim); }
+
+    /* ── 인라인 편집 ── */
+    .cell-input, .cell-select {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text);
+      padding: 3px 6px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .cell-input:hover, .cell-select:hover {
+      border-color: var(--border);
+      background: var(--surface-2);
+    }
+    .cell-input:focus, .cell-select:focus {
+      border-color: var(--accent);
+      background: var(--surface-2);
+    }
+    .cell-input.t-title { font-weight: 500; }
+    .cell-select { cursor: pointer; }
   </style>
 </head>
 <body>
@@ -353,6 +377,18 @@
     return `<span class="badge ${cls}">${esc(p)}</span>`;
   }
 
+  function cellSelect(id, field, value, options) {
+    const opts = options.map(o =>
+      `<option value="${esc(o)}"${o === value ? ' selected' : ''}>${esc(o)}</option>`
+    ).join('');
+    return `<select class="cell-select" data-id="${esc(id)}" data-field="${field}" data-original="${esc(value || '')}">${opts}</select>`;
+  }
+
+  function cellInput(id, field, value, type = 'text', extra = '') {
+    const v = value || '';
+    return `<input class="cell-input${extra}" type="${type}" value="${esc(v)}" data-original="${esc(v)}" data-id="${esc(id)}" data-field="${field}" placeholder="—">`;
+  }
+
   function renderAll() {
     const ip   = tasks.filter(t => t.status === '진행 중');
     const done = tasks.filter(t => t.status === '완료');
@@ -363,30 +399,26 @@
   }
 
   function renderInProgress(list) {
-    const sorted = [...list].sort((a, b) => {
-      if (!a.due_date && !b.due_date) return 0;
-      if (!a.due_date) return 1;
-      if (!b.due_date) return -1;
-      return a.due_date.localeCompare(b.due_date);
-    });
+    const sorted = [...list].sort((a, b) =>
+      (b.created_at || '').localeCompare(a.created_at || '')
+    );
 
     const tbody = document.getElementById('tb-ip');
     if (sorted.length === 0) {
-      tbody.innerHTML = '<tr><td class="empty-cell" colspan="8">진행 중인 업무가 없습니다.</td></tr>';
+      tbody.innerHTML = '<tr><td class="empty-cell" colspan="7">진행 중인 업무가 없습니다.</td></tr>';
       return;
     }
 
     tbody.innerHTML = sorted.map(t => `
       <tr>
-        <td><span class="t-link" onclick="openEdit('${esc(t.id)}')">${esc(t.title)}</span></td>
+        <td>${cellInput(t.id, 'title', t.title, 'text', ' t-title')}</td>
         <td><span class="badge b-ip">진행 중</span></td>
-        <td>${priorityBadge(t.priority)}</td>
-        <td>${esc(t.assignee || '—')}</td>
-        <td>${esc(t.created_at || '—')}</td>
-        <td class="desc-cell" title="${esc(t.description || '')}">${esc(t.description || '—')}</td>
+        <td>${cellSelect(t.id, 'priority', t.priority, ['높음', '보통', '낮음'])}</td>
+        <td>${cellInput(t.id, 'assignee', t.assignee)}</td>
+        <td>${cellInput(t.id, 'created_at', t.created_at, 'date')}</td>
+        <td>${cellInput(t.id, 'description', t.description)}</td>
         <td class="actions">
           <button class="btn-ic do-complete" onclick="completeTask('${esc(t.id)}')" title="완료 처리">✓</button>
-          <button class="btn-ic do-edit"     onclick="openEdit('${esc(t.id)}')"     title="수정">✏</button>
           <button class="btn-ic do-delete"   onclick="confirmDelete('${esc(t.id)}')" title="삭제">✕</button>
         </td>
       </tr>
@@ -423,14 +455,13 @@
 
       const rows = items.map(t => `
         <tr>
-          <td><span class="t-link" onclick="openEdit('${esc(t.id)}')">${esc(t.title)}</span></td>
-          <td>${priorityBadge(t.priority)}</td>
-          <td>${esc(t.assignee || '—')}</td>
-          <td>${esc(t.created_at || '—')}</td>
-          <td>${esc(t.completed_at || '—')}</td>
-          <td class="desc-cell" title="${esc(t.description || '')}">${esc(t.description || '—')}</td>
+          <td>${cellInput(t.id, 'title', t.title, 'text', ' t-title')}</td>
+          <td>${cellSelect(t.id, 'priority', t.priority, ['높음', '보통', '낮음'])}</td>
+          <td>${cellInput(t.id, 'assignee', t.assignee)}</td>
+          <td>${cellInput(t.id, 'created_at', t.created_at, 'date')}</td>
+          <td>${cellInput(t.id, 'completed_at', t.completed_at, 'date')}</td>
+          <td>${cellInput(t.id, 'description', t.description)}</td>
           <td class="actions">
-            <button class="btn-ic do-edit"   onclick="openEdit('${esc(t.id)}')"     title="수정">✏</button>
             <button class="btn-ic do-delete" onclick="confirmDelete('${esc(t.id)}')" title="삭제">✕</button>
           </td>
         </tr>
@@ -564,6 +595,62 @@
       toast(err.message, 'err');
     }
   }
+
+  /* ── 인라인 편집 저장 ── */
+  async function saveCell(el) {
+    const id    = el.dataset.id;
+    const field = el.dataset.field;
+    const value = el.tagName === 'SELECT' ? el.value : el.value.trim();
+    const orig  = el.dataset.original;
+    if (value === orig) return;
+    if (field === 'title' && !value) {
+      el.value = orig;
+      toast('작업 이름은 필수입니다.', 'err');
+      return;
+    }
+    try {
+      const updated = await apiFetch(`${API}/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ [field]: value || null }),
+      });
+      tasks = tasks.map(t => t.id === id ? updated : t);
+      el.dataset.original = value;
+      toast('저장되었습니다.');
+    } catch (err) {
+      el.value = orig;
+      toast(err.message, 'err');
+    }
+  }
+
+  let _escaping = false;
+
+  // text / date 필드: 포커스 이탈 시 저장
+  document.addEventListener('blur', e => {
+    const el = e.target;
+    if (!el.dataset.id || el.tagName === 'SELECT') return;
+    if (_escaping) return;
+    saveCell(el);
+  }, true);
+
+  // select 필드: 값 변경 즉시 저장
+  document.addEventListener('change', e => {
+    const el = e.target;
+    if (!el.dataset.id || el.tagName !== 'SELECT') return;
+    saveCell(el);
+  });
+
+  // Enter → 저장, Escape → 취소
+  document.addEventListener('keydown', e => {
+    const el = e.target;
+    if (!el.dataset.id) return;
+    if (e.key === 'Enter') { e.preventDefault(); el.blur(); }
+    if (e.key === 'Escape') {
+      _escaping = true;
+      el.value = el.dataset.original;
+      el.blur();
+      _escaping = false;
+    }
+  });
 
   /* ── 초기화 ── */
   loadTasks();
