@@ -8,28 +8,35 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
       --bg: #191919; --surface: #252525; --surface-2: #2d2d2d;
-      --border: #363636; --text: #e0e0e0; --text-dim: #888;
+      --border: #363636; --text: #e0e0e0; --text-dim: #888; --text-heading: #ffffff;
+      --row-border: #2b2b2b; --row-hover: rgba(255,255,255,.025);
       --accent: #2eaadc; --green: #27ae60; --red: #c0392b; --orange: #e67e22;
+    }
+    [data-theme="light"] {
+      --bg: #f4f6f8; --surface: #ffffff; --surface-2: #eef0f3;
+      --border: #d8dce2; --text: #1e1e1e; --text-dim: #6b7280; --text-heading: #111827;
+      --row-border: #e8eaed; --row-hover: rgba(0,0,0,.035);
+      --accent: #1a8ab5; --green: #1e8c4e; --red: #b83228; --orange: #c9691c;
     }
     body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; line-height: 1.5; }
     .page { max-width: 1400px; margin: 0 auto; padding: 0 28px 60px; }
     .page-header { display: flex; align-items: center; justify-content: space-between; padding: 28px 0 20px; border-bottom: 1px solid var(--border); margin-bottom: 32px; }
-    .page-header h1 { font-size: 1.7rem; font-weight: 700; color: #fff; }
+    .page-header h1 { font-size: 1.7rem; font-weight: 700; color: var(--text-heading); }
     .btn { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; transition: background .15s, opacity .15s; }
     .btn:disabled { opacity: .5; cursor: not-allowed; }
     .btn-primary { background: var(--accent); color: #fff; }
     .btn-primary:hover:not(:disabled) { background: #279cc8; }
     .btn-secondary { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); }
-    .btn-secondary:hover:not(:disabled) { background: #383838; }
+    .btn-secondary:hover:not(:disabled) { background: var(--surface-2); filter: brightness(.93); }
     .section-hd { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-    .section-title { font-size: 1.05rem; font-weight: 600; color: #fff; }
+    .section-title { font-size: 1.05rem; font-weight: 600; color: var(--text-heading); }
     .count-badge { background: var(--surface-2); border: 1px solid var(--border); color: var(--text-dim); font-size: 11px; padding: 2px 8px; border-radius: 10px; }
     .table-wrap { overflow-x: auto; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 40px; }
     .task-table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
     .task-table th { background: var(--surface); color: var(--text-dim); font-weight: 500; padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; position: relative; overflow: hidden; }
-    .task-table td { padding: 10px 14px; border-bottom: 1px solid #2b2b2b; vertical-align: middle; overflow: hidden; }
+    .task-table td { padding: 10px 14px; border-bottom: 1px solid var(--row-border); vertical-align: middle; overflow: hidden; }
     .task-table tr:last-child td { border-bottom: none; }
-    .task-table tbody tr:hover td { background: rgba(255,255,255,.025); }
+    .task-table tbody tr:hover td { background: var(--row-hover); }
     .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; white-space: nowrap; }
     .b-ip   { background: rgba(46,170,220,.18); color: #2eaadc; border: 1px solid rgba(46,170,220,.35); }
     .b-done { background: rgba(39,174,96,.18);  color: #2ecc71; border: 1px solid rgba(39,174,96,.35); }
@@ -47,13 +54,13 @@
     .empty-cell { text-align: center; color: var(--text-dim); padding: 28px; font-style: italic; }
     .month-group { margin-bottom: 20px; }
     .month-hd { display: flex; align-items: center; gap: 10px; padding: 8px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px 8px 0 0; }
-    .month-title { font-weight: 600; color: #ccc; font-size: .9rem; }
+    .month-title { font-weight: 600; color: var(--text); font-size: .9rem; }
     .month-group .table-wrap { border-top: none; border-radius: 0 0 8px 8px; margin-bottom: 0; }
     .modal-ov { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.72); z-index: 1000; justify-content: center; align-items: flex-start; padding-top: 56px; }
     .modal-ov.open { display: flex; }
     .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; width: 560px; max-width: calc(100vw - 32px); max-height: calc(100vh - 112px); overflow-y: auto; box-shadow: 0 24px 64px rgba(0,0,0,.55); }
     .modal-hd { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px 16px; border-bottom: 1px solid var(--border); }
-    .modal-hd h2 { font-size: 1.1rem; font-weight: 600; color: #fff; }
+    .modal-hd h2 { font-size: 1.1rem; font-weight: 600; color: var(--text-heading); }
     .modal-close { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 20px; line-height: 1; padding: 4px; }
     .modal-close:hover { color: var(--text); }
     .modal-body { padding: 20px 24px; }
@@ -83,13 +90,19 @@
     th.col-draggable:active { cursor: grabbing; }
     th.drag-over { background: rgba(46,170,220,.18) !important; outline: 2px solid var(--accent); outline-offset: -2px; }
     th.col-dragging { opacity: .4; }
+    /* ── 테마 토글 ── */
+    .btn-theme { background: var(--surface-2); border: 1px solid var(--border); color: var(--text); width: 36px; height: 36px; border-radius: 8px; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: background .15s, border-color .15s; }
+    .btn-theme:hover { background: var(--border); }
   </style>
 </head>
 <body>
 <div class="page">
   <header class="page-header">
     <h1>📋 품질혁신실장 업무 관리</h1>
-    <button class="btn btn-primary" onclick="openCreate()">+ 새로 만들기</button>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="btn-theme" id="btn-theme" onclick="toggleTheme()" title="라이트/다크 모드 전환"></button>
+      <button class="btn btn-primary" onclick="openCreate()">+ 새로 만들기</button>
+    </div>
   </header>
   <section>
     <div class="section-hd">
@@ -139,33 +152,51 @@
 <script>
   'use strict';
 
+  /* ── 테마 ── */
+  (function initTheme() {
+    const saved = localStorage.getItem('wt-theme') || 'dark';
+    applyTheme(saved);
+  })();
+
+  function applyTheme(theme) {
+    document.documentElement.dataset.theme = theme;
+    const btn = document.getElementById('btn-theme');
+    if (btn) btn.textContent = theme === 'dark' ? '☀️' : '🌙';
+  }
+
+  function toggleTheme() {
+    const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+    localStorage.setItem('wt-theme', next);
+    applyTheme(next);
+  }
+
   /* ── 컬럼 정의 ── */
   const cols = {
     ip: [
       { id: 'add-del',      label: '',         fixed: true, w: 58  },
       { id: 'title',        label: '작업 이름',             w: 200 },
-      { id: 'status',       label: '상태',                  w: 80  },
+      { id: 'description',  label: '설명',                  w: 200 },
       { id: 'priority',     label: '우선순위',               w: 90  },
-      { id: 'assignee',     label: '담당자',                 w: 110 },
+      { id: 'status',       label: '상태',                  w: 80  },
       { id: 'created_at',   label: '등록일',                 w: 120 },
       { id: 'completed_at', label: '완료일',                 w: 120 },
-      { id: 'description',  label: '설명',                   w: 200 },
+      { id: 'assignee',     label: '담당자',                 w: 110 },
       { id: 'actions',      label: '',         fixed: true, w: 44  },
     ],
     done: [
       { id: 'add-del',      label: '',          fixed: true, w: 58  },
       { id: 'title',        label: '작업 이름',              w: 200 },
-      { id: 'status',       label: '상태',                   w: 80  },
+      { id: 'description',  label: '설명',                   w: 200 },
       { id: 'priority',     label: '우선순위',                w: 90  },
-      { id: 'assignee',     label: '담당자',                  w: 110 },
+      { id: 'status',       label: '상태',                   w: 80  },
       { id: 'created_at',   label: '등록일',                  w: 120 },
       { id: 'completed_at', label: '완료일',                  w: 120 },
-      { id: 'description',  label: '설명',                    w: 200 },
+      { id: 'assignee',     label: '담당자',                  w: 110 },
       { id: 'actions',      label: '',          fixed: true, w: 44  },
     ],
   };
 
-  const COL_KEY = 'wt-cols-v2';
+  const COL_KEY = 'wt-cols-v3';
 
   (function loadColState() {
     try {
