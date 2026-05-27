@@ -9,6 +9,7 @@
     "db:init:remote": "wrangler d1 execute workstodo-db --remote --file=schema.sql"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "wrangler": "^3.0.0"
   }
 }
