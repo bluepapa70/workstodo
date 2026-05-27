@@ -137,6 +137,7 @@
         <div class="f-field"><label for="f-status">상태</label><select id="f-status"><option value="진행 중">진행 중</option><option value="완료">완료</option></select></div>
         <div class="f-field"><label for="f-priority">우선순위</label><select id="f-priority"><option value="높음">높음</option><option value="보통" selected>보통</option><option value="낮음">낮음</option></select></div>
         <div class="f-field"><label for="f-assignee">담당자</label><input id="f-assignee" type="text" placeholder="담당자 이름"></div>
+        <div class="f-field"><label for="f-due">기한일</label><input id="f-due" type="date"></div>
         <div class="f-field"><label for="f-created">등록일</label><input id="f-created" type="date"></div>
         <div class="f-field full"><label for="f-desc">설명 / 비고</label><textarea id="f-desc" placeholder="추가 설명이나 메모를 입력하세요"></textarea></div>
       </div>
@@ -175,28 +176,30 @@
     ip: [
       { id: 'add-del',      label: '',         fixed: true, w: 58  },
       { id: 'title',        label: '작업 이름',             w: 200 },
+      { id: 'due_date',     label: '기한일',                w: 110 },
+      { id: 'assignee',     label: '담당자',                w: 110 },
       { id: 'description',  label: '설명',                  w: 200 },
       { id: 'priority',     label: '우선순위',               w: 90  },
       { id: 'status',       label: '상태',                  w: 80  },
-      { id: 'created_at',   label: '등록일',                 w: 120 },
-      { id: 'completed_at', label: '완료일',                 w: 120 },
-      { id: 'assignee',     label: '담당자',                 w: 110 },
+      { id: 'created_at',   label: '등록일',                 w: 110 },
+      { id: 'completed_at', label: '완료일',                 w: 110 },
       { id: 'actions',      label: '',         fixed: true, w: 44  },
     ],
     done: [
       { id: 'add-del',      label: '',          fixed: true, w: 58  },
       { id: 'title',        label: '작업 이름',              w: 200 },
+      { id: 'due_date',     label: '기한일',                 w: 110 },
+      { id: 'assignee',     label: '담당자',                 w: 110 },
       { id: 'description',  label: '설명',                   w: 200 },
       { id: 'priority',     label: '우선순위',                w: 90  },
       { id: 'status',       label: '상태',                   w: 80  },
-      { id: 'created_at',   label: '등록일',                  w: 120 },
-      { id: 'completed_at', label: '완료일',                  w: 120 },
-      { id: 'assignee',     label: '담당자',                  w: 110 },
+      { id: 'created_at',   label: '등록일',                  w: 110 },
+      { id: 'completed_at', label: '완료일',                  w: 110 },
       { id: 'actions',      label: '',          fixed: true, w: 44  },
     ],
   };
 
-  const COL_KEY = 'wt-cols-v3';
+  const COL_KEY = 'wt-cols-v4';
 
   (function loadColState() {
     try {
@@ -232,6 +235,7 @@
     }
     switch (colId) {
       case 'title':        return `<td>${cellInput(t.id,'title',t.title,'text',' t-title')}</td>`;
+      case 'due_date':     return `<td>${cellInput(t.id,'due_date',t.due_date,'date')}</td>`;
       case 'status':       return section === 'done'
         ? `<td><span class="badge b-done">완료</span></td>`
         : `<td><span class="badge b-ip">진행 중</span></td>`;
@@ -250,6 +254,7 @@
     if (colId === 'actions') return '<td></td>';
     switch (colId) {
       case 'title':        return `<td><input id="nr-title" class="cell-input t-title" placeholder="업무 이름..." style="border-color:var(--accent);background:var(--surface-2)"></td>`;
+      case 'due_date':     return `<td><input id="nr-due"       class="cell-input" type="date" placeholder="—"></td>`;
       case 'status':       return section === 'done'
         ? `<td><span class="badge b-done">완료</span></td>`
         : `<td><span class="badge b-ip">진행 중</span></td>`;
@@ -434,6 +439,7 @@
       title,
       priority:    document.getElementById('nr-priority').value,
       assignee:    document.getElementById('nr-assignee')?.value.trim()  || null,
+      due_date:    document.getElementById('nr-due')?.value              || null,
       created_at:  document.getElementById('nr-created')?.value          || null,
       description: document.getElementById('nr-desc')?.value.trim()      || null,
     };
@@ -484,6 +490,7 @@
     document.getElementById('f-status').value   = t?.status      || '진행 중';
     document.getElementById('f-priority').value = t?.priority    || '보통';
     document.getElementById('f-assignee').value = t?.assignee    || '';
+    document.getElementById('f-due').value      = t?.due_date    || '';
     document.getElementById('f-created').value  = t?.created_at  || today();
     document.getElementById('f-desc').value     = t?.description || '';
   }
@@ -501,7 +508,7 @@
   async function submitTask() {
     const title = document.getElementById('f-title').value.trim();
     if (!title) { document.getElementById('f-title').focus(); return; }
-    const data = { title, status: document.getElementById('f-status').value, priority: document.getElementById('f-priority').value, assignee: document.getElementById('f-assignee').value.trim()||null, created_at: document.getElementById('f-created').value||null, description: document.getElementById('f-desc').value.trim()||null };
+    const data = { title, status: document.getElementById('f-status').value, priority: document.getElementById('f-priority').value, assignee: document.getElementById('f-assignee').value.trim()||null, due_date: document.getElementById('f-due').value||null, created_at: document.getElementById('f-created').value||null, description: document.getElementById('f-desc').value.trim()||null };
     const btn = document.getElementById('btn-save');
     btn.disabled = true;
     try {
