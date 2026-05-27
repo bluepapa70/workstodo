@@ -40,6 +40,9 @@
     .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; white-space: nowrap; }
     .b-ip   { background: rgba(46,170,220,.18); color: #2eaadc; border: 1px solid rgba(46,170,220,.35); }
     .b-done { background: rgba(39,174,96,.18);  color: #2ecc71; border: 1px solid rgba(39,174,96,.35); }
+    .status-select { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; cursor: pointer; font-family: inherit; outline: none; }
+    .status-select.b-ip   { background: rgba(46,170,220,.18); color: #2eaadc; border: 1px solid rgba(46,170,220,.35); }
+    .status-select.b-done { background: rgba(39,174,96,.18);  color: #2ecc71; border: 1px solid rgba(39,174,96,.35); }
     .b-hi { background: rgba(192,57,43,.2);  color: #e74c3c; border: 1px solid rgba(192,57,43,.4); }
     .b-md { background: rgba(230,126,34,.2); color: #e67e22; border: 1px solid rgba(230,126,34,.4); }
     .b-lo { background: rgba(39,174,96,.2);  color: #2ecc71; border: 1px solid rgba(39,174,96,.4); }
@@ -238,9 +241,13 @@
     switch (colId) {
       case 'title':        return `<td>${cellInput(t.id,'title',t.title,'text',' t-title')}</td>`;
       case 'due_date':     return `<td>${cellInput(t.id,'due_date',t.due_date,'date')}</td>`;
-      case 'status':       return section === 'done'
-        ? `<td><span class="badge b-done">완료</span></td>`
-        : `<td><span class="badge b-ip">진행 중</span></td>`;
+      case 'status': {
+        const cls  = t.status === '완료' ? 'b-done' : 'b-ip';
+        const opts = ['진행 중', '완료'].map(o =>
+          `<option value="${esc(o)}"${o === t.status ? ' selected' : ''}>${esc(o)}</option>`
+        ).join('');
+        return `<td><select class="status-select ${cls}" data-id="${esc(t.id)}" data-field="status" data-original="${esc(t.status)}">${opts}</select></td>`;
+      }
       case 'priority':     return `<td>${cellSelect(t.id,'priority',t.priority,['높음','보통','낮음'])}</td>`;
       case 'assignee':     return `<td>${cellInput(t.id,'assignee',t.assignee)}</td>`;
       case 'created_at':   return `<td>${cellInput(t.id,'created_at',t.created_at,'date')}</td>`;
@@ -477,6 +484,7 @@
       const updated = await apiFetch(`${API}/${id}`, { method:'PUT', body: JSON.stringify({[field]: value||null}) });
       tasks = tasks.map(t => t.id===id ? updated : t);
       el.dataset.original = value; toast('저장되었습니다.');
+      if (field === 'status') renderAll();
     } catch(err) { el.value = orig; toast(err.message, 'err'); }
   }
 
